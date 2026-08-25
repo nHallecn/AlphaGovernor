@@ -1,5 +1,7 @@
 node_modules/
 .next/
+dist/
+.turbo/
 out/
 coverage/
 .env
@@ -8,5 +10,6 @@ coverage/
 npm-debug.log*
 *.tsbuildinfo
 .vercel/
+.pnpm-store/
 .DS_Store
 Thumbs.db

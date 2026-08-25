@@ -1,34 +1,25 @@
 {
-  "name": "alpha-governor",
-  "version": "1.0.0",
+  "name": "alphagovernor",
+  "version": "2.0.0",
   "private": true,
-  "description": "The autonomous capital command center that hires, funds, evaluates, and fires AI trading agents.",
+  "packageManager": "pnpm@11.24.0",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint app components lib tests next.config.ts vitest.config.mts",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
-  "dependencies": {
-    "lucide-react": "1.34.0",
-    "next": "16.3.3",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "recharts": "3.10.1",
-    "zod": "^4.1.12"
+    "dev": "turbo dev --parallel",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "db:generate": "pnpm --filter @alphagovernor/db generate",
+    "db:migrate": "pnpm --filter @alphagovernor/db migrate",
+    "db:seed": "pnpm --filter @alphagovernor/db seed",
+    "db:studio": "pnpm --filter @alphagovernor/db studio"
   },
   "devDependencies": {
-    "@types/node": "^24.10.0",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
-    "eslint": "^9.39.1",
-    "eslint-config-next": "16.3.3",
-    "typescript": "^5.9.3",
-    "vitest": "4.1.11"
+    "turbo": "2.10.12",
+    "typescript": "7.0.2"
   },
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22.0.0"
   }
 }

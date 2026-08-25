@@ -1,9 +1,16 @@
-<!-- BEGIN:nextjs-agent-rules -->
+# AlphaGovernor engineering rules
 
-# This is NOT the Next.js you know
+- This repository is paper-trading only. Fail closed when provider, account, position, database, or risk state is uncertain.
+- No strategy agent may call trading execution directly. Only `ExecutionService` can use a trading provider.
+- Every execution must reference persisted Governor and Risk decisions.
+- Use Decimal for persisted money and deliberate numeric conversions at provider boundaries.
+- Indicators, regime classification, trust, allocation, ranking, risk, sizing, and P&L are deterministic code—not model output.
+- Invalid or unavailable AI output becomes an abstention, never a guessed trade.
+- Provider timeouts around order placement require reconciliation by `client_order_id`; never retry blindly.
+- Audit every state-changing financial decision. Never log credentials or authorization headers.
+- Replay reuses the same decision, Governor, and Risk code with replay clock/data/execution adapters and must never call Alpaca execution.
+- Tests are part of each feature. Keep typecheck, lint, tests, and builds green.
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+## Next.js workspace
 
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
+Before changing `apps/web`, read the relevant bundled Next.js 16 guide in `node_modules/next/dist/docs/` because this version contains breaking changes.
