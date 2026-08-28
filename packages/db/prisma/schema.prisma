@@ -7,15 +7,65 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum AgentType { MOMENTUM MEAN_REVERSION NEWS DEFENSIVE }
-enum AgentStatus { ACTIVE PROBATION SUSPENDED DISABLED }
-enum MarketRegime { BULL_TREND BEAR_TREND RANGE HIGH_VOL LOW_VOL EVENT_SHOCK }
-enum ProposalAction { BUY SELL EXIT HOLD }
-enum RiskDecisionType { APPROVE RESIZE REJECT }
-enum DecisionCycleStatus { CREATED DATA_READY AGENTS_COMPLETE GOVERNED RISK_REVIEWED EXECUTED COMPLETED FAILED CANCELLED }
-enum DecisionMode { LIVE_PAPER REPLAY }
-enum ReplayStatus { CREATED RUNNING PAUSED COMPLETED FAILED STOPPED }
-enum SystemTradingStatus { RUNNING PAUSED RISK_OFF }
+enum AgentType {
+  MOMENTUM
+  MEAN_REVERSION
+  NEWS
+  DEFENSIVE
+}
+enum AgentStatus {
+  ACTIVE
+  PROBATION
+  SUSPENDED
+  DISABLED
+}
+enum MarketRegime {
+  BULL_TREND
+  BEAR_TREND
+  RANGE
+  HIGH_VOL
+  LOW_VOL
+  EVENT_SHOCK
+}
+enum ProposalAction {
+  BUY
+  SELL
+  EXIT
+  HOLD
+}
+enum RiskDecisionType {
+  APPROVE
+  RESIZE
+  REJECT
+}
+enum DecisionCycleStatus {
+  CREATED
+  DATA_READY
+  AGENTS_COMPLETE
+  GOVERNED
+  RISK_REVIEWED
+  EXECUTED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+enum DecisionMode {
+  LIVE_PAPER
+  REPLAY
+}
+enum ReplayStatus {
+  CREATED
+  RUNNING
+  PAUSED
+  COMPLETED
+  FAILED
+  STOPPED
+}
+enum SystemTradingStatus {
+  RUNNING
+  PAUSED
+  RISK_OFF
+}
 
 model Agent {
   id          String      @id @default(uuid()) @db.Uuid

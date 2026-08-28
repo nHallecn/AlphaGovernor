@@ -1,39 +1,37 @@
 # 90-second demo script
 
-## 0:00–0:12 — The problem
+## 0:00–0:15 — The thesis
 
 Open **Mission Control**.
 
-“Most AI trading demos ask one model what to buy. AlphaGovernor solves the harder problem: who should be trusted with capital, under which regime, and who can stop them?”
+“Most trading-agent demos ask one model what to buy. AlphaGovernor answers the harder question: which specialist deserves capital now, and who has authority to stop it?”
 
-Point to the four agents, their trust scores, allocations, and the locked Risk Constitution.
+Point to telemetry, regime, four agents, trust, allocation, the `PAPER TRADING ONLY` seal, and Risk Constitution.
 
-## 0:12–0:20 — Start the autonomous session
+## 0:15–0:35 — Start the proof
 
 Open **Replay Lab** and click **Run the market**.
 
-“This is the same governed loop, accelerated 50× so we never depend on a quiet market during judging.”
+“This calls the real server replay through the same indicators, agents, Governor, and Risk Guardian as paper mode. Only the clock, data, and execution adapters change; replay can never call Alpaca execution.”
 
-## 0:20–0:42 — Proposal and non-negotiable veto
+Point out `LIVE AUDIT`, then `PROOF COMPLETE`, while the 50× story advances.
 
-Let the NVDA proposal and approval appear, then pause on the TSLA veto. Open **Decision Room**.
+## 0:35–0:55 — Show the veto
 
-“Mean Reversion requested $20,000. The constitution permitted $8,400, so execution was blocked. The AI cannot negotiate with or override policy.”
+Pause on the oversized TSLA event and open **Decision Room**.
 
-## 0:42–1:02 — Fire an AI trader
+“The strategy requested $20,000. The Risk Constitution permitted $8,400, so execution was blocked. This is deterministic code and persisted evidence—not model judgment.”
 
-Resume until Mean Reversion enters probation.
+Trace Specialist → Governor → Risk Guardian → no Alpaca submission → Auditor.
 
-“Repeated high-confidence misses reduced calibration and trust from 57 to 49. The Governor automatically cut its authority to $4,500 and returned capital to cash.”
+## 0:55–1:15 — Fire and fund agents
 
-## 1:02–1:18 — Close the learning loop
+Resume through Mean Reversion probation and the Momentum outcome.
 
-Finish the replay and return to Mission Control.
+“Confident failure reduces calibration, trust, and future allocation. Disciplined performance earns authority. The system changes who can deploy capital, not merely a dashboard score.”
 
-“Momentum closed NVDA at +2.4%. The Auditor raised trust from 81 to 86, and the Governor reassigned capital. Outcomes change authority, not just a dashboard number.”
+## 1:15–1:30 — Safety close
 
-## 1:18–1:30 — Business close
+Point to **RISK OFF**.
 
-“AlphaGovernor is the control plane for autonomous capital — a system that hires, funds, evaluates, and fires AI traders while deterministic policy remains in charge.”
-
-If credentials are configured, show the **ALPACA PAPER** badge and sync the paper account after the replay.
+“Only ExecutionService holds the provider boundary. Every order references persisted Governor and Risk decisions; uncertain submissions reconcile by idempotency key; the operator can cancel all paper orders instantly. AlphaGovernor is governance infrastructure for autonomous capital.”

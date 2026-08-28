@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const booleanString = z.enum(["true", "false"]).transform((value) => value === "true");
+const booleanString = z.union([z.boolean(), z.enum(["true", "false"])]).transform((value) => value === true || value === "true");
 
 export const EnvironmentSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -9,14 +9,14 @@ export const EnvironmentSchema = z.object({
   DATABASE_URL: z.string().min(1).default("postgresql://postgres:postgres@localhost:5432/alphagovernor"),
   REDIS_URL: z.url().default("redis://localhost:6379"),
   OPERATOR_TOKEN: z.string().min(8).default("change-me-before-deploying"),
-  DEMO_MODE: booleanString.default("true"),
+  DEMO_MODE: booleanString.default(true),
   ALPACA_API_KEY: z.string().default(""),
   ALPACA_SECRET_KEY: z.string().default(""),
-  ALPACA_PAPER: booleanString.default("true"),
+  ALPACA_PAPER: booleanString.default(true),
   ALPACA_TRADING_BASE_URL: z.url().default("https://paper-api.alpaca.markets"),
   ALPACA_DATA_BASE_URL: z.url().default("https://data.alpaca.markets"),
   ALPACA_DATA_FEED: z.enum(["iex", "sip", "boats", "overnight"]).default("iex"),
-  ALPACA_MCP_ENABLED: booleanString.default("false"),
+  ALPACA_MCP_ENABLED: booleanString.default(false),
   ALPACA_TOOLSETS: z.string().default("account,assets,stock-data,news"),
   AI_PROVIDER: z.enum(["openai", "mock"]).default("openai"),
   OPENAI_API_KEY: z.string().default(""),

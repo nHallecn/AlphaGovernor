@@ -2,16 +2,16 @@ import { PrismaClient, AgentType, AgentStatus, SystemTradingStatus } from "@pris
 
 const prisma = new PrismaClient();
 const agents = [
-  { type: AgentType.MOMENTUM, name: "Momentum", description: "Trend, volume, and relative-strength strategy", trust: 60 },
-  { type: AgentType.MEAN_REVERSION, name: "Mean Reversion", description: "Range-regime statistical stretch strategy", trust: 60 },
-  { type: AgentType.NEWS, name: "News Intelligence", description: "Material-event structured reasoning agent", trust: 60 },
-  { type: AgentType.DEFENSIVE, name: "Capital Preservation", description: "Portfolio protection and risk-off strategy", trust: 65 },
+  { id: "a1000000-0000-4000-8000-000000000001", type: AgentType.MOMENTUM, name: "Momentum", description: "Trend, volume, and relative-strength strategy", trust: 60 },
+  { id: "a1000000-0000-4000-8000-000000000002", type: AgentType.MEAN_REVERSION, name: "Mean Reversion", description: "Range-regime statistical stretch strategy", trust: 60 },
+  { id: "a1000000-0000-4000-8000-000000000003", type: AgentType.NEWS, name: "News Intelligence", description: "Material-event structured reasoning agent", trust: 60 },
+  { id: "a1000000-0000-4000-8000-000000000004", type: AgentType.DEFENSIVE, name: "Capital Preservation", description: "Portfolio protection and risk-off strategy", trust: 65 },
 ];
 const watchlist = ["SPY", "QQQ", "AAPL", "MSFT", "NVDA", "AMZN", "META", "GOOGL", "TSLA", "AMD"];
 
 async function main() {
   for (const [index, item] of agents.entries()) {
-    const agent = await prisma.agent.upsert({ where: { type: item.type }, update: { name: item.name, description: item.description }, create: { type: item.type, name: item.name, description: item.description, status: AgentStatus.ACTIVE } });
+    const agent = await prisma.agent.upsert({ where: { type: item.type }, update: { name: item.name, description: item.description }, create: { id: item.id, type: item.type, name: item.name, description: item.description, status: AgentStatus.ACTIVE } });
     const existing = await prisma.agentMetric.findFirst({ where: { agentId: agent.id } });
     if (!existing) await prisma.agentMetric.create({ data: { agentId: agent.id, trustScore: item.trust, pnlPct: index === 2 ? -0.4 : 0.8 + index, winRate: 0.5 + index * 0.03, maxDrawdownPct: 1 + index * 0.4, calibrationScore: 0.65 + index * 0.04, regimeScore: 0.6, executionQuality: 0.9, sampleSize: 0, source: "REPLAY" } });
   }

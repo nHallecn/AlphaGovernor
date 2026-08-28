@@ -61,8 +61,9 @@ export class RuntimeState {
   }
   updateTradingStatus(status: SystemTradingStatus, reason: string) {
     this.tradingStatus = status;
-    this.appendAudit({ eventType: "system.status", severity: status === "RUNNING" ? "INFO" : "WARN", message: reason, payload: { status } });
+    const record = this.appendAudit({ eventType: "system.status", severity: status === "RUNNING" ? "INFO" : "WARN", message: reason, payload: { status } });
     this.emit("system.status", { tradingStatus: status, reason });
+    return record;
   }
 }
 

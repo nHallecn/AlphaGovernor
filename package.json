@@ -16,8 +16,9 @@
     "db:studio": "pnpm --filter @alphagovernor/db studio"
   },
   "devDependencies": {
+    "pnpm": "11.24.0",
     "turbo": "2.10.12",
-    "typescript": "7.0.2"
+    "typescript": "5.9.3"
   },
   "engines": {
     "node": ">=22.0.0"

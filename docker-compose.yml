@@ -27,6 +27,46 @@ services:
       timeout: 3s
       retries: 10
 
+  api:
+    build:
+      context: .
+      target: api
+    environment:
+      NODE_ENV: production
+      APP_BASE_URL: http://localhost:3000
+      API_BASE_URL: http://localhost:4000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/alphagovernor
+      REDIS_URL: redis://redis:6379
+      OPERATOR_TOKEN: ${OPERATOR_TOKEN:-change-me-before-deploying}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ALPACA_API_KEY: ${ALPACA_API_KEY:-}
+      ALPACA_SECRET_KEY: ${ALPACA_SECRET_KEY:-}
+      ALPACA_PAPER: "true"
+      ALPACA_TRADING_BASE_URL: https://paper-api.alpaca.markets
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["sh", "-c", "pnpm db:migrate && pnpm db:seed && pnpm --filter @alphagovernor/api start"]
+    ports:
+      - "4000:4000"
+
+  web:
+    build:
+      context: .
+      target: web
+    environment:
+      NODE_ENV: production
+      API_BASE_URL: http://api:4000
+      OPERATOR_TOKEN: ${OPERATOR_TOKEN:-change-me-before-deploying}
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
 volumes:
   alphagovernor_postgres:
   alphagovernor_redis:

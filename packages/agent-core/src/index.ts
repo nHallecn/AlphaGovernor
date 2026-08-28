@@ -64,7 +64,7 @@ export class MeanReversionAgent implements TradingAgent {
       .map((instrument) => ({ instrument, score: clamp((Math.abs(Math.min(0, instrument.indicators.zScore20!)) - 1.5) / 1.5) * 0.65 + clamp((40 - instrument.indicators.rsi14!) / 20) * 0.35 }))
       .filter(({ instrument }) => instrument.indicators.zScore20! <= -1.75 && instrument.indicators.rsi14! <= 35)
       .sort((a, b) => b.score - a.score)[0];
-    if (!best || best.score < 0.65) return abstain(input.cycleId, this.id, input.now, "NO_EDGE", "No liquid watchlist symbol met the deterministic stretch and RSI requirements.");
+    if (!best || best.score < 0.60) return abstain(input.cycleId, this.id, input.now, "NO_EDGE", "No liquid watchlist symbol met the deterministic stretch and RSI requirements.");
     const indicators = best.instrument.indicators;
     const target = Math.max(indicators.ema20!, indicators.price + 1.875 * indicators.atr14!);
     return { kind: "proposal", proposal: {
@@ -129,7 +129,7 @@ export function calculateTrustScore(components: TrustComponents): number {
 export interface AllocationCandidate { agentId: string; type: AgentType; status: AgentStatus; trust: number }
 export function allocateAgents(candidates: AllocationCandidate[], regime: MarketRegime, deployableWeight = 0.9, maxWeight = 0.35): Record<string, number> {
   const statusMultiplier: Record<AgentStatus, number> = { ACTIVE: 1, PROBATION: 0.35, SUSPENDED: 0, DISABLED: 0 };
-  const raw = candidates.map((candidate) => ({ ...candidate, score: clamp(candidate.trust / 100) * REGIME_COMPATIBILITY[candidate.type][regime] * statusMultiplier[candidate.status] }));
+  const raw = candidates.map((candidate) => ({ ...candidate, cap: maxWeight * statusMultiplier[candidate.status], score: clamp(candidate.trust / 100) * REGIME_COMPATIBILITY[candidate.type][regime] * statusMultiplier[candidate.status] }));
   const result: Record<string, number> = Object.fromEntries(raw.map((item) => [item.agentId, 0]));
   let remaining = deployableWeight;
   let eligible = raw.filter((item) => item.score > 0);
@@ -137,10 +137,10 @@ export function allocateAgents(candidates: AllocationCandidate[], regime: Market
     const total = eligible.reduce((sum, item) => sum + item.score, 0);
     if (total === 0) break;
     let assigned = 0;
-    for (const item of eligible) { const addition = Math.min(maxWeight - (result[item.agentId] ?? 0), remaining * (item.score / total)); result[item.agentId] = (result[item.agentId] ?? 0) + Math.max(0, addition); assigned += Math.max(0, addition); }
+    for (const item of eligible) { const addition = Math.min(item.cap - (result[item.agentId] ?? 0), remaining * (item.score / total)); result[item.agentId] = (result[item.agentId] ?? 0) + Math.max(0, addition); assigned += Math.max(0, addition); }
     if (assigned <= 0.000001) break;
     remaining -= assigned;
-    eligible = eligible.filter((item) => (result[item.agentId] ?? 0) < maxWeight - 0.000001);
+    eligible = eligible.filter((item) => (result[item.agentId] ?? 0) < item.cap - 0.000001);
   }
   return result;
 }

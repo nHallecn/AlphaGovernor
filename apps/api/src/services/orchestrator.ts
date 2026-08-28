@@ -74,8 +74,18 @@ export class DecisionOrchestrator {
         const risk = reviewProposal(proposal, { paperMode: true, systemStatus: mode === "REPLAY" ? "RUNNING" : runtime.tradingStatus, marketOpen: mode === "REPLAY" ? true : clock.isOpen, accountFreshnessSeconds: 0, positionFreshnessSeconds: 0, priceFreshnessSeconds: mode === "REPLAY" ? 0 : instrumentContext.find((item) => item.symbol === proposal.symbol)?.priceAgeSeconds ?? 999, symbolEnabled: this.env.watchlist.includes(proposal.symbol), symbolTradable: true, equity: account.equity, buyingPower: account.buyingPower, dayPnlPct: portfolio.dayPnlPct, portfolioDrawdownPct: portfolio.drawdownPct, currentPrice: price, currentSymbolExposureUsd: Math.abs(position?.marketValue ?? 0), agentBudgetUsd: agent.maxNotionalUsd, agentCurrentExposureUsd: runtime.positions.filter((item) => item.originatingAgentId === agent.id).reduce((sum, item) => sum + Math.abs(item.marketValue), 0), openPositionCount: runtime.positions.length, openEntryOrderForSymbol: runtime.orders.some((order) => order.symbol === proposal.symbol && !["filled", "canceled", "rejected"].includes(order.status)), ordersInCycle: lineage.orders.length, rewardRiskRatio });
         lineage.riskDecisions.push(risk);
         runtime.appendAudit({ cycleId, proposalId, eventType: "risk.decided", severity: risk.decision === "REJECT" ? "WARN" : "INFO", message: `Risk Guardian ${risk.decision} for ${proposal.symbol}.`, payload: risk }); runtime.emit("risk.decided", risk, cycleId);
-        if (risk.decision !== "REJECT") { const order = await this.execution.execute(proposal, risk, mode); lineage.orders.push(order); }
       }
+      lineage.status = "RISK_REVIEWED";
+      // LIVE_PAPER must durably persist the cycle, Governor decision, proposals, and
+      // Risk decisions before ExecutionService is allowed to create or submit orders.
+      await persistence.persistDecision(lineage);
+      for (const risk of lineage.riskDecisions) {
+        if (risk.decision === "REJECT") continue;
+        const proposal = lineage.proposals.find((item) => item.proposalId === risk.proposalId)!;
+        const order = await this.execution.execute(proposal, risk, mode);
+        lineage.orders.push(order);
+      }
+      if (lineage.orders.length) lineage.status = "EXECUTED";
       lineage.status = "COMPLETED"; lineage.completedAt = new Date().toISOString();
       runtime.appendAudit({ cycleId, eventType: "cycle.completed", severity: "INFO", message: `Cycle completed with ${lineage.proposals.length} proposal(s), ${lineage.riskDecisions.length} risk review(s), and ${lineage.orders.length} order(s).`, payload: { mode } });
       await persistence.persistDecision(lineage);
@@ -83,6 +93,7 @@ export class DecisionOrchestrator {
     } catch (error) {
       lineage.status = "FAILED"; lineage.completedAt = new Date().toISOString();
       runtime.appendAudit({ cycleId, eventType: "cycle.failed", severity: "ERROR", message: error instanceof Error ? error.message : "Decision cycle failed." });
+      if (lineage.governor) await persistence.persistDecision(lineage).catch(() => undefined);
       throw error;
     }
   }

@@ -270,4 +270,7 @@ footer span:last-child { display: flex; align-items: center; gap: 6px; }.footer-
   footer { display: none; }.rule-grid, .required-list { grid-template-columns: 1fr; }.required-list > strong { grid-column: auto; }
 }
 
+.emergency-button { height: 32px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; color: var(--red); background: rgba(255,99,118,.07); border: 1px solid rgba(255,99,118,.28); border-radius: 6px; font: 600 8px var(--font-mono); letter-spacing: .05em; cursor: pointer; }
+.emergency-button:hover { background: rgba(255,99,118,.14); }
+
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }

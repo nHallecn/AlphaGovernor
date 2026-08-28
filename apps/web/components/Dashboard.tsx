@@ -229,7 +229,35 @@ export function Dashboard() {
   const [selectedEvent, setSelectedEvent] = useState<DecisionEvent>(initialState.timeline[0]);
   const [showConstitution, setShowConstitution] = useState(false);
   const [connection, setConnection] = useState<"checking" | "replay" | "paper">("checking");
-  useEffect(() => { fetch("/api/health").then((r) => r.json()).then((data) => setConnection(data.alpaca ? "paper" : "replay")).catch(() => setConnection("replay")); }, []);
+  const [systemStatus, setSystemStatus] = useState<"RUNNING" | "PAUSED" | "RISK_OFF">("PAUSED");
+  const [proofStatus, setProofStatus] = useState("READY");
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/v1/system/status").then((response) => response.json()),
+      fetch("/api/v1/account").then((response) => response.json()),
+      fetch("/api/v1/agents").then((response) => response.json()),
+      fetch("/api/v1/market/regime").then((response) => response.json()),
+    ]).then(([system, account, agents, regime]) => {
+      setConnection(system.data.realAlpaca ? "paper" : "replay");
+      setSystemStatus(system.data.tradingStatus);
+      setState((current) => {
+        const next = structuredClone(current); const value = account.data.portfolioValue;
+        next.portfolioValue = value; next.buyingPower = account.data.buyingPower;
+        next.todayPnl = value - account.data.previousEquity;
+        next.todayPnlPct = account.data.previousEquity ? next.todayPnl / account.data.previousEquity * 100 : 0;
+        next.regime = { label: String(regime.data.regime).replaceAll("_", " "), confidence: Math.round(regime.data.confidence * 100), volatility: ["HIGH_VOL", "EVENT_SHOCK"].includes(regime.data.regime) ? "HIGH" : "MODERATE", summary: regime.data.explanation };
+        const ids: Record<string, keyof SimulationState["agents"]> = { MOMENTUM: "momentum", NEWS: "news", MEAN_REVERSION: "reversion", DEFENSIVE: "defensive" };
+        for (const remote of agents.data) {
+          const id = ids[remote.type];
+          if (id) Object.assign(next.agents[id], { trust: remote.trustScore, allocation: value * remote.allocationWeight, pnl: remote.pnlPct, winRate: remote.winRate * 100, drawdown: remote.maxDrawdownPct, calibration: remote.calibrationScore * 100, compatibility: remote.regimeCompatibility * 100, status: remote.status === "DISABLED" ? "SUSPENDED" : remote.status });
+        }
+        return next;
+      });
+    }).catch(() => setConnection("replay"));
+    const events = new EventSource("/api/v1/events");
+    events.onopen = () => setProofStatus("LIVE AUDIT"); events.onerror = () => setProofStatus("RECONNECTING");
+    return () => events.close();
+  }, []);
   useEffect(() => {
     if (!isRunning) return;
     if (state.replayIndex >= replayScenario.length) return;
@@ -249,7 +277,22 @@ export function Dashboard() {
     setState((current) => applyReplayMutation(current, mutation));
     setSelectedEvent(mutation.event);
   };
-  const toggle = () => { if (state.replayIndex >= replayScenario.length) reset(); else setIsRunning((value) => !value); };
+  const toggle = () => {
+    if (state.replayIndex >= replayScenario.length) { reset(); return; }
+    if (!isRunning && state.replayIndex === 0) {
+      setProofStatus("VERIFYING");
+      void fetch("/api/control/replay", { method: "POST" }).then(async (response) => {
+        if (!response.ok) throw new Error(await response.text()); setProofStatus("PROOF COMPLETE");
+      }).catch(() => setProofStatus("UI DEMO"));
+    }
+    setIsRunning((value) => !value);
+  };
+  const killSwitch = () => {
+    if (!window.confirm("Engage RISK_OFF and cancel all open paper orders?")) return;
+    void fetch("/api/control/system", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "kill" }) })
+      .then((response) => { if (!response.ok) throw new Error("Kill switch failed"); setSystemStatus("RISK_OFF"); })
+      .catch(() => setProofStatus("KILL ERROR"));
+  };
   const nav = [{ id: "mission" as const, label: "Mission Control", icon: Activity }, { id: "decision" as const, label: "Decision Room", icon: BrainCircuit }, { id: "replay" as const, label: "Replay Lab", icon: RefreshCcw }];
 
   return <main className="app-shell">
@@ -262,14 +305,14 @@ export function Dashboard() {
     <div className="main-area">
       <header className="topbar">
         <div><p className="eyebrow">AUTONOMOUS CAPITAL COMMAND CENTER</p><h1>{nav.find((item) => item.id === tab)?.label}</h1></div>
-        <div className="topbar-actions"><div className="market-clock"><Clock3 size={15}/><span><small>MARKET TIME</small><strong>{state.marketTime}:00 ET</strong></span></div><span className={`connection-badge ${connection}`}><Wifi size={14}/>{connection === "paper" ? "ALPACA PAPER" : connection === "checking" ? "CHECKING" : "REPLAY MODE"}</span><button className="primary-button compact" onClick={() => { setTab("replay"); if (!isRunning && state.replayIndex < replayScenario.length) setIsRunning(true); }}>{isRunning ? <Pause size={15}/> : <Play size={15}/>} {isRunning ? "PAUSE" : "RUN 50×"}</button></div>
+        <div className="topbar-actions"><div className="market-clock"><Clock3 size={15}/><span><small>{proofStatus}</small><strong>{state.marketTime}:00 ET</strong></span></div><span className={`connection-badge ${connection}`}><Wifi size={14}/>{connection === "paper" ? "ALPACA PAPER" : connection === "checking" ? "CHECKING" : `${systemStatus} · REPLAY`}</span><button className="emergency-button" onClick={killSwitch}><TriangleAlert size={14}/>RISK OFF</button><button className="primary-button compact" onClick={() => { setTab("replay"); toggle(); }}>{isRunning ? <Pause size={15}/> : <Play size={15}/>} {isRunning ? "PAUSE" : "RUN 50×"}</button></div>
       </header>
       <div className="content-area">
         {tab === "mission" && <MissionControl state={state} selectedAgent={selectedAgent} setSelectedAgent={setSelectedAgent} setSelectedEvent={(event) => { setSelectedEvent(event); setTab("decision"); }} />}
         {tab === "decision" && <DecisionRoom state={state} selectedEvent={selectedEvent} setSelectedEvent={setSelectedEvent} />}
         {tab === "replay" && <ReplayLab state={state} isRunning={isRunning} onToggle={toggle} onReset={reset} onStep={step} />}
       </div>
-      <footer><span>AlphaGovernor v1.0</span><span>Educational demo · Not investment advice</span><span><span className="footer-dot"/>SYSTEM NOMINAL</span></footer>
+      <footer><span>AlphaGovernor v2.0</span><span>Educational demo · Not investment advice</span><span><span className="footer-dot"/>{systemStatus}</span></footer>
     </div>
     {showConstitution && <ConstitutionModal onClose={() => setShowConstitution(false)} />}
   </main>;
